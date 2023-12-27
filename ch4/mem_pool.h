@@ -1,5 +1,4 @@
 #include <cstddef>
-#include <stdexcept>
 #include <vector>
 
 #include "macros.h"
@@ -33,14 +32,17 @@ public:
 
 private:
   auto updateNextFreeIndex() noexcept {
-    const auto inital_free_index = next_free_index_;
+    const auto initial_free_index = next_free_index_;
     while (!store_[next_free_index_].is_free) {
       ++next_free_index_;
       if (UNLIKELY(next_free_index_ == store_.size())) {
         next_free_index_ = 0;
       }
-      if (UNLIKELY(inital_free_index == next_free_index_)) {
-        ASSERT(inital_free_index != next_free_index_, "Memory pool out of space");
+      if (UNLIKELY(initial_free_index == next_free_index_) &&
+          UNLIKELY(initial_free_index != store_.size()-1)) {
+        ASSERT(initial_free_index != next_free_index_, "mem pool full");
+      } else {
+        return;
       }
     }
   }
