@@ -1,4 +1,6 @@
 #include <cstddef>
+#include <deque>
+#include <iostream>
 #include <vector>
 
 #include "macros.h"
@@ -33,18 +35,23 @@ public:
 private:
   auto updateNextFreeIndex() noexcept {
     const auto initial_free_index = next_free_index_;
-    while (!store_[next_free_index_].is_free) {
-      ++next_free_index_;
-      if (UNLIKELY(next_free_index_ == store_.size())) {
-        next_free_index_ = 0;
-      }
-      if (UNLIKELY(initial_free_index == next_free_index_) &&
-          UNLIKELY(initial_free_index != store_.size()-1)) {
-        ASSERT(initial_free_index != next_free_index_, "mem pool full");
-      } else {
+    for (auto i = 0; i < initial_free_index; i++) {
+      if (UNLIKELY(store_[i].is_free)) {
+        next_free_index_ = i;
         return;
       }
     }
+
+    for (auto i = initial_free_index; i < store_.size(); i++) {
+      if (UNLIKELY(store_[i].is_free)) {
+        next_free_index_ = i;
+        return;
+      }
+    }
+
+    store_.push_back({T(), true});
+    next_free_index_ = store_.size() - 1;
+    return;
   }
 
   struct ObjectBlock {
@@ -52,7 +59,7 @@ private:
     bool is_free;
   };
 
-  std::vector<ObjectBlock> store_;
+  std::deque<ObjectBlock> store_;
 
   std::size_t next_free_index_ = 0;
 };
